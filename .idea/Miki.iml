@@ -13,6 +13,8 @@
   <component name="PackageRequirementsSettings">
     <option name="requirementsPath" value="C:\Users\patrick.murrell\PycharmProjects\Miki\Riki\requirements.txt" />
     <option name="versionSpecifier" value="Strong equality (==x.y.z)" />
+    <option name="modifyBaseFiles" value="true" />
+    <option name="keepMatchingSpecifier" value="false" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Jinja2" />
