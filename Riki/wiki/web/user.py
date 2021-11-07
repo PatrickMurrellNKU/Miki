@@ -3,7 +3,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~
 """
 import os
-import json
+import sqlite3
 import binascii
 import hashlib
 from functools import wraps
@@ -14,25 +14,17 @@ from flask_login import current_user
 
 
 class UserManager(object):
-    """A very simple user Manager, that saves it's data as json."""
-    def __init__(self, path):
-        self.file = os.path.join(path, 'users.json')
-
-    def read(self):
-        if not os.path.exists(self.file):
-            return {}
-        with open(self.file) as f:
-            data = json.loads(f.read())
-        return data
-
-    def write(self, data):
-        with open(self.file, 'w') as f:
-            f.write(json.dumps(data, indent=2))
+    """A very simple user Manager, that saves it's data in a SQLite database"""
+    def __init__(self):
+        pass
 
     def add_user(self, name, password,
-                 active=True, roles=[], authentication_method=None):
-        users = self.read()
-        if users.get(name):
+                 active=True, roles="", authentication_method=None):
+        conn = sqlite3.connect('Database/database.db')
+        cursor = conn.cursor()
+        cursor.execute("select * from Users where username  = ?", (name,))
+        user = cursor.fetchall()
+        if user:
             return False
         if authentication_method is None:
             authentication_method = get_default_authentication_method()
@@ -51,29 +43,50 @@ class UserManager(object):
             new_user['password'] = password
         else:
             raise NotImplementedError(authentication_method)
-        users[name] = new_user
-        self.write(users)
-        userdata = users.get(name)
+        cursor.execute("INSERT INTO Users (username,active,authentication_method,password,authenticated,roles) "
+                       "VALUES (?,?,?,?,?,?)",
+                       (name, new_user['active'], new_user['authentication_method'],
+                        new_user['password'],new_user['authenticated'], new_user['roles']))
+        conn.commit()
+        cursor.execute("SELECT * FROM Users WHERE username  = ?", (name,))
+        userdata = cursor.fetchone()
+        userdata = {'active': userdata[1], 'authentication_method': userdata[2], 'password': userdata[3],
+                    'authenticated': userdata[4], 'roles': userdata[5]}
+        conn.close()
         return User(self, name, userdata)
 
     def get_user(self, name):
-        users = self.read()
-        userdata = users.get(name)
+        conn = sqlite3.connect('Database/database.db')
+        cursor = conn.cursor()
+        cursor.execute("select * from Users where username  = ?", (name,))
+        userdata = cursor.fetchone()
+        conn.close()
         if not userdata:
             return None
+        userdata = {'active': userdata[1], 'authentication_method': userdata[2], 'password': userdata[3],
+                    'authenticated': userdata[4], 'roles': userdata[5]}
         return User(self, name, userdata)
 
     def delete_user(self, name):
-        users = self.read()
-        if not users.pop(name, False):
+        conn = sqlite3.connect('Database/database.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Users WHERE username = ?", (name,))
+        userdata = cursor.fetchone()
+        if not userdata:
             return False
-        self.write(users)
+        cursor.execute("DELETE FROM Users WHERE username = ?", (name,))
+        conn.commit()
+        conn.close()
         return True
 
     def update(self, name, userdata):
-        data = self.read()
-        data[name] = userdata
-        self.write(data)
+        conn = sqlite3.connect('Database/database.db')
+        cursor = conn.cursor()
+        cursor.execute("UPDATE Users SET active = ?,authentication_method = ?,password = ?,authenticated = ?, roles = ? where username = ?",
+                       (userdata['active'],  userdata['authentication_method'],
+                        userdata['password'], userdata['authenticated'], userdata['roles'], name))
+        conn.commit()
+        conn.close()
 
 
 class User(object):

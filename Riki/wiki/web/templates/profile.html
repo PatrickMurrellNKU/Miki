@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Profile Summary{% endblock title %}
+
+{% block content %}
+    <h3>Username: {{ username }}</h3>
+    <h3>Active: {{ active }}</h3>
+    <h3><a href="{{ url_for('wiki.user_unregister') }}">Unregister</a></h3>
+{% endblock content %}

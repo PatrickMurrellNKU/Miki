@@ -55,3 +55,22 @@ class LoginForm(Form):
             return
         if not user.check_password(field.data):
             raise ValidationError('Username and password do not match.')
+
+
+class RegisterForm(Form):
+    name = TextField('', [InputRequired()])
+    password = PasswordField('', [InputRequired()])
+    confirmpassword = PasswordField('', [InputRequired()])
+
+    def validate_name(form, field):
+        user = current_users.get_user(field.data)
+        if user:
+            raise ValidationError('This username already exists.')
+
+    def validate_password(form, field):
+        passwordOne = form.password.data
+        passwordTwo = form.confirmpassword.data
+        if passwordOne == passwordTwo:
+            return
+        else:
+            raise ValidationError('Passwords do not match')

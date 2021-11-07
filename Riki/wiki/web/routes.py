@@ -18,9 +18,11 @@ from wiki.web.forms import EditorForm
 from wiki.web.forms import LoginForm
 from wiki.web.forms import SearchForm
 from wiki.web.forms import URLForm
+from wiki.web.forms import RegisterForm
 from wiki.web import current_wiki
 from wiki.web import current_users
-from wiki.web.user import protect
+from wiki.web.user import protect, User, UserManager
+
 
 
 bp = Blueprint('wiki', __name__)
@@ -151,13 +153,23 @@ def user_logout():
 
 
 @bp.route('/user/')
+@login_required
 def user_index():
-    pass
+    username = current_user.get_id()
+    active = current_user.is_active()
+    return render_template('profile.html', username=username, active=active)
 
 
-@bp.route('/user/create/')
-def user_create():
-    pass
+@bp.route('/user/register/', methods=['GET', 'POST'])
+def user_register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        usermanager = UserManager()
+        user = usermanager.add_user(name=form.name.data, password=form.password.data)
+        user.set('authenticated', True)
+        flash('Account creation successful.', 'success')
+        return redirect(request.args.get("next") or url_for('wiki.index'))
+    return render_template('register.html', form=form)
 
 
 @bp.route('/user/<int:user_id>/')
@@ -165,9 +177,16 @@ def user_admin(user_id):
     pass
 
 
-@bp.route('/user/delete/<int:user_id>/')
-def user_delete(user_id):
-    pass
+@bp.route('/user/unregister/', methods=['GET', 'POST'])
+@login_required
+def user_unregister():
+    form = LoginForm()
+    if form.validate_on_submit():
+        usermanager = UserManager()
+        usermanager.delete_user(form.name.data)
+        flash('Account deleted.', 'success')
+        return redirect(request.args.get("next") or url_for('wiki.index'))
+    return render_template('unregister.html', form=form)
 
 
 """
