@@ -22,7 +22,7 @@ from wiki.web.forms import RegisterForm
 from wiki.web import current_wiki
 from wiki.web import current_users
 from wiki.web.user import protect, User, UserManager
-
+from wiki.web.featured import feature
 
 
 bp = Blueprint('wiki', __name__)
@@ -47,7 +47,10 @@ def index():
 @bp.route('/<path:url>/')
 @protect
 def display(url):
-    page = current_wiki.get_or_404(url)
+    if url == 'feature':
+        page = feature()
+    else:
+        page = current_wiki.get_or_404(url)
     return render_template('page.html', page=page)
 
 
