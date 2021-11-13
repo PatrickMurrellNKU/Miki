@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Your File{% endblock title %}
+{% with messages = get_flashed_messages() %}
+   {% if messages %}
+         {{ message }}
+   {% endif %}
+{% endwith %}
+{% block content %}
+<form class="form form-inline" method="POST" enctype="multipart/form-data">
+	{{ form.hidden_tag() }}
+    <div class="form-group">
+        {{ form.file(id="upload")}}
+    </div>
+    <div class="form-group ">
+        {{ form.description(placeholder="Enter Description here") }}
+    </div>
+    <br>
+    <input type="submit" class="btn btn-primary" value="Upload">
+
+</form>
+{% endblock content %}

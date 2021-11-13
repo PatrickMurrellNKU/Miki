@@ -2,7 +2,10 @@
     Routes
     ~~~~~~
 """
-from flask import Blueprint
+import os
+import sqlite3
+
+from flask import Blueprint, send_file
 from flask import flash
 from flask import redirect
 from flask import render_template
@@ -12,6 +15,7 @@ from flask_login import current_user
 from flask_login import login_required
 from flask_login import login_user
 from flask_login import logout_user
+from werkzeug.utils import secure_filename
 
 from wiki.core import Processor
 from wiki.web.forms import EditorForm
@@ -24,6 +28,7 @@ from wiki.web import current_users
 from wiki.web.user import protect, User, UserManager
 from wiki.web.featured import feature
 
+from web.forms import UploadForm
 
 bp = Blueprint('wiki', __name__)
 
@@ -191,6 +196,75 @@ def user_unregister():
         return redirect(request.args.get("next") or url_for('wiki.index'))
     return render_template('unregister.html', form=form)
 
+
+@bp.route('/files/')
+@protect
+def files():
+    try:
+        con = sqlite3.connect('./Database/database.db')
+        c = con.cursor()
+        c.execute('select * from files')
+        data = c.fetchall()
+    except Exception as e:
+        print(e)
+        flash('There was an error displaying files')
+        return render_template('files.html')
+    return render_template('files.html', data=data)
+
+
+@bp.route('/files/<int:fid>')
+@protect
+def file_display(fid):
+    try:
+        con = sqlite3.connect('./Database/database.db')
+        c = con.cursor()
+        c.execute('select * from files where id = ?', [fid])
+        data = [dict(id=row[0], name=row[1], desc=row[2], date=row[3], user=row[4]) for row in c.fetchall()]
+        if not data:
+            return redirect(url_for('wiki.files'))
+    except Exception as e:
+        print(e)
+        flash('There was an error displaying your file')
+        return redirect(url_for('wiki.files'))
+    return render_template('file_display.html', fid=fid, data=data)
+
+
+@bp.route('/files/upload/', methods=['GET', 'POST'])
+@protect
+def upload():
+    form = UploadForm()
+    if form.validate_on_submit():
+        f = request.files['file']
+        description = form.description.data
+        filename = secure_filename(f.filename)
+        user = current_user.get_id()
+        try:
+            con = sqlite3.connect('./Database/database.db')
+            c = con.cursor()
+            c.execute("""INSERT INTO files(filename, description, user) 
+                           VALUES (?,?, ?);""", (filename, description, user))
+            con.commit()
+            upload_folder = "../Riki/wiki/web/static/uploads/"
+            f.save(os.path.join(upload_folder, filename))
+            fid = c.lastrowid
+            return redirect(url_for('wiki.file_display', fid=fid))
+        except Exception as e:
+            print(e)
+            flash('There was an error uploading your file')
+            return render_template('upload.html', form=form)
+            # flash error message
+    return render_template('upload.html', form=form)
+
+
+@bp.route('/download/<name>')
+@protect
+def download(name):
+    try:
+        return send_file('./static/uploads/%s' % name)
+    except Exception as e:
+        print(e)
+        flash('There was an error downloading your file')
+        return redirect(url_for('wiki.files'))
 
 """
     Error Handlers

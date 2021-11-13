@@ -3,7 +3,8 @@
     ~~~~~
 """
 from flask_wtf import Form
-from wtforms import BooleanField
+from flask_wtf.file import FileRequired
+from wtforms import BooleanField, SubmitField, FileField
 from wtforms import TextField
 from wtforms import TextAreaField
 from wtforms import PasswordField
@@ -74,3 +75,9 @@ class RegisterForm(Form):
             return
         else:
             raise ValidationError('Passwords do not match')
+
+
+class UploadForm(Form):
+    file = FileField('Upload File', validators=[FileRequired()])
+    description = TextAreaField(validators=[InputRequired()])
+    upload = SubmitField('Upload')
