@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %} {{ data[0].name }} {% endblock title %}
+
+{% with messages = get_flashed_messages() %}
+   {% if messages %}
+         {{ message }}
+   {% endif %}
+{% endwith %}
+
+{% block content %}
+
+<table class="table table-striped">
+<tr>
+    <th>Filename</th>
+    <td>{{ data[0].name}}</td>
+</tr>
+<tr>
+    <th>Description</th>
+    <td>{{ data[0].desc}}</td>
+</tr>
+<tr>
+    <th>Date Uploaded</th>
+    <td>{{ data[0].date}}</td>
+</tr>
+    <tr>
+    <th>Uploaded By</th>
+    <td>{{ data[0].user}}</td>
+</tr>
+<tr>
+    <td colspan="2"><a href="/download/{{ data[0].name}}" target="blank"><button class='btn btn-default'>Download!</button></a></td>
+</tr>
+
+</table>
+
+{% endblock content %}
