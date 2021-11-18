@@ -2,6 +2,7 @@
     Routes
     ~~~~~~
 """
+import io
 import os
 import sqlite3
 
@@ -29,6 +30,8 @@ from wiki.web.user import protect, User, UserManager
 from wiki.web.featured import feature
 
 from wiki.web.forms import UploadForm
+
+import html2text
 
 bp = Blueprint('wiki', __name__)
 
@@ -266,6 +269,21 @@ def download(name):
         flash('There was an error downloading your file')
         return redirect(url_for('wiki.files'))
 
+
+@bp.route('/convert/txt/<url>')
+def convert_txt(url):
+    page = current_wiki.get_or_404(url)
+    url = url + '.txt'
+
+    converted_folder = "../Riki/wiki/web/static/converted/"
+
+    file = open(converted_folder + url, 'w')
+    file.write(html2text.html2text(render_template('bare.html', page=page)))
+    file.close()
+
+    return send_file('./static/converted/' + url, as_attachment=True)
+
+
 """
     Error Handlers
     ~~~~~~~~~~~~~~
@@ -275,4 +293,3 @@ def download(name):
 @bp.errorhandler(404)
 def page_not_found(error):
     return render_template('404.html'), 404
-
