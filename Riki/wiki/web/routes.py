@@ -28,7 +28,7 @@ from wiki.web import current_users
 from wiki.web.user import protect, User, UserManager
 from wiki.web.featured import feature
 
-from web.forms import UploadForm
+from wiki.web.forms import UploadForm
 
 bp = Blueprint('wiki', __name__)
 
