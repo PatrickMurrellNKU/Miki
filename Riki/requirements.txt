@@ -36,3 +36,4 @@ Werkzeug==0.15.6
 WTForms==2.2.1
 xvfbwrapper==0.2.9
 html2text
+pdfkit
