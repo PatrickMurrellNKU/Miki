@@ -32,6 +32,7 @@ from wiki.web.featured import feature
 from wiki.web.forms import UploadForm
 
 import html2text
+import pdfkit
 
 bp = Blueprint('wiki', __name__)
 
@@ -268,6 +269,19 @@ def download(name):
         print(e)
         flash('There was an error downloading your file')
         return redirect(url_for('wiki.files'))
+
+
+@bp.route('/convert/pdf/<url>')
+def convert_pdf(url):
+    page = current_wiki.get_or_404(url)
+    url = url + '.pdf'
+    converted_folder = "../Riki/wiki/web/static/converted/"
+
+    print(render_template('pdf.html', page=page))
+
+    pdfkit.from_string(render_template('pdf.html', page=page), output_path=(converted_folder + url))
+
+    return send_file('./static/converted/' + url, as_attachment=True)
 
 
 @bp.route('/convert/txt/<url>')

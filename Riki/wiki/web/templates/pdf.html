@@ -1,0 +1,31 @@
+{% from "helpers.html" import input %}
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link rel="stylesheet" type="text/css" href="http://127.0.0.1:5000/static/bootstrap.css">
+	<link rel="stylesheet" type="text/css" href="http://127.0.0.1:5000/static/responsive.css">
+	<link rel="stylesheet" type="text/css" href="http://127.0.0.1:5000/static/pygments.css">
+</head>
+
+<body>
+
+	<div class="container">
+		<div class="row">
+			<div class="span10 offset1">
+				{% block header %}
+				<div class="page-header">
+					<h1>{% block title %}{{ page.title }}{% endblock title %}</h1>
+				</div>
+				{% endblock header %}
+			</div>
+		</div>
+
+		{% block content %}
+		{{ page }}
+		{% endblock content %}
+
+	</div>
+</body>
+
+</html>
