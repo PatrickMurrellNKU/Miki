@@ -10,3 +10,4 @@ CONTENT_DIR = os.getcwd() + '/content'
 USER_DIR = os.getcwd() + '/user'
 NUMBER_OF_HISTORY = 5
 PRIVATE = True
+DOMAIN = 'http://127.0.0.1:5000'

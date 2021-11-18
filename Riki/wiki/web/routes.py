@@ -17,6 +17,7 @@ from flask_login import login_required
 from flask_login import login_user
 from flask_login import logout_user
 from werkzeug.utils import secure_filename
+from config import DOMAIN
 
 from wiki.core import Processor
 from wiki.web.forms import EditorForm
@@ -270,16 +271,13 @@ def download(name):
         flash('There was an error downloading your file')
         return redirect(url_for('wiki.files'))
 
-
 @bp.route('/convert/pdf/<url>')
 def convert_pdf(url):
     page = current_wiki.get_or_404(url)
     url = url + '.pdf'
     converted_folder = "../Riki/wiki/web/static/converted/"
 
-    print(render_template('pdf.html', page=page))
-
-    pdfkit.from_string(render_template('pdf.html', page=page), output_path=(converted_folder + url))
+    pdfkit.from_string(render_template('pdf.html', page=page, domain=DOMAIN), output_path=(converted_folder + url))
 
     return send_file('./static/converted/' + url, as_attachment=True)
 
