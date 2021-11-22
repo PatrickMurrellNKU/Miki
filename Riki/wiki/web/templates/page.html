@@ -33,6 +33,8 @@
 <ul class="nav nav-tabs nav-stacked">
 	<li><a href="{{ url_for('wiki.edit', url=page.url) }}">Edit</a></li>
   <li><a href="{{ url_for('wiki.move', url=page.url) }}">Move</a></li>
+  <li><a href="{{ url_for('wiki.convert_pdf', url=page.url) }}">Download PDF</a></li>
+  <li><a href="{{ url_for('wiki.convert_txt', url=page.url) }}">Download Plaintext</a></li>
   <li><a href="#confirmDelete" data-toggle="modal" class="text-error">Delete</a></li>
 </ul>
 {% endblock sidebar %}
