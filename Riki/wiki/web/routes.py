@@ -175,13 +175,16 @@ def user_index():
 
 @bp.route('/user/register/', methods=['GET', 'POST'])
 def user_register():
+    # Create a register form object and check if it is valid
     form = RegisterForm()
     if form.validate_on_submit():
+        # if the form is valid then add a new user to the database
         usermanager = UserManager()
         user = usermanager.add_user(name=form.name.data, password=form.password.data)
         user.set('authenticated', True)
         flash('Account creation successful.', 'success')
         return redirect(request.args.get("next") or url_for('wiki.index'))
+    # the form is not valid so return the register page
     return render_template('register.html', form=form)
 
 
@@ -193,12 +196,15 @@ def user_admin(user_id):
 @bp.route('/user/unregister/', methods=['GET', 'POST'])
 @login_required
 def user_unregister():
+    # Create a login form and check if it is valid
     form = LoginForm()
     if form.validate_on_submit():
+        # If the login form is valid then delete the user from the database
         usermanager = UserManager()
         usermanager.delete_user(form.name.data)
         flash('Account deleted.', 'success')
         return redirect(request.args.get("next") or url_for('wiki.index'))
+    # The form is not valid so return the unregister page
     return render_template('unregister.html', form=form)
 
 

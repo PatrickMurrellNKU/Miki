@@ -57,17 +57,19 @@ class LoginForm(Form):
         if not user.check_password(field.data):
             raise ValidationError('Username and password do not match.')
 
-
+# Form used for registering accounts on the wiki
 class RegisterForm(Form):
     name = TextField('', [InputRequired()])
     password = PasswordField('', [InputRequired()])
     confirmpassword = PasswordField('', [InputRequired()])
 
+    # Check that the current user does not already exist so that we can use this username
     def validate_name(form, field):
         user = current_users.get_user(field.data)
         if user:
             raise ValidationError('This username already exists.')
 
+    # make sure the passwords match so the user does not accidentally set the wrong password
     def validate_password(form, field):
         passwordOne = form.password.data
         passwordTwo = form.confirmpassword.data
