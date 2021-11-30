@@ -51,7 +51,7 @@ class UserManager(object):
         cursor.execute("SELECT * FROM Users WHERE username  = ?", (name,))
         userdata = cursor.fetchone()
         userdata = {'active': userdata[1], 'authentication_method': userdata[2], 'password': userdata[3],
-                    'authenticated': userdata[4], 'roles': userdata[5]}
+                    'authenticated': userdata[4], 'roles': userdata[5], 'email': userdata[6], 'featured': userdata[7]}
         conn.close()
         return User(self, name, userdata)
 
@@ -64,7 +64,7 @@ class UserManager(object):
         if not userdata:
             return None
         userdata = {'active': userdata[1], 'authentication_method': userdata[2], 'password': userdata[3],
-                    'authenticated': userdata[4], 'roles': userdata[5]}
+                    'authenticated': userdata[4], 'roles': userdata[5], 'email': userdata[6], 'featured': userdata[7]}
         return User(self, name, userdata)
 
     def delete_user(self, name):
@@ -82,9 +82,21 @@ class UserManager(object):
     def update(self, name, userdata):
         conn = sqlite3.connect('Database/database.db')
         cursor = conn.cursor()
-        cursor.execute("UPDATE Users SET active = ?,authentication_method = ?,password = ?,authenticated = ?, roles = ? where username = ?",
+        cursor.execute("UPDATE Users SET active = ?,authentication_method = ?,password = ?,"
+                       "authenticated = ?,roles = ?,email = ?, featured = ? where username = ?",
                        (userdata['active'],  userdata['authentication_method'],
-                        userdata['password'], userdata['authenticated'], userdata['roles'], name))
+                        userdata['password'], userdata['authenticated'], userdata['roles'],
+                        userdata['email'], userdata['featured'], name))
+        conn.commit()
+        conn.close()
+
+    def opt_in(self, name, email):
+        conn = sqlite3.connect('Database/database.db')
+        cursor = conn.cursor()
+        if current_user.opt_in() == 0:
+            cursor.execute("UPDATE Users SET email = ?, featured = ? where username = ?", (email, 1, name))
+        else:
+            cursor.execute("UPDATE Users SET email = ?, featured = ? where username = ?", (email, 0, name))
         conn.commit()
         conn.close()
 
@@ -116,6 +128,12 @@ class User(object):
 
     def get_id(self):
         return self.name
+
+    def opt_in(self):
+        return self.data.get('featured')
+
+    def get_email(self):
+        return self.data.get('email')
 
     def check_password(self, password):
         """Return True, return False, or raise NotImplementedError if the
