@@ -19,11 +19,12 @@ from wiki.web.forms import LoginForm
 from wiki.web.forms import SearchForm
 from wiki.web.forms import URLForm
 from wiki.web.forms import RegisterForm
+from wiki.web.forms import FeaturedForm
 from wiki.web import current_wiki
 from wiki.web import current_users
 from wiki.web.user import protect, User, UserManager
 from wiki.web.featured import feature
-
+from wiki.web.forms import OptForm
 
 bp = Blueprint('wiki', __name__)
 
@@ -190,6 +191,29 @@ def user_unregister():
         flash('Account deleted.', 'success')
         return redirect(request.args.get("next") or url_for('wiki.index'))
     return render_template('unregister.html', form=form)
+
+
+@bp.route('/user/featured/', methods=['GET', 'POST'])
+@login_required
+def featured():
+    if current_user.get_email() is None:
+        form = FeaturedForm()
+        if form.validate_on_submit():
+            usermanager = UserManager()
+            name = current_user.get_id()
+            usermanager.opt_in(name=name, email=form.email.data)
+            return redirect(url_for('wiki.user_index'))
+        return render_template('featured.html', form=form)
+    else:
+        form = OptForm()
+        if form.is_submitted():
+            usermanager = UserManager()
+            usermanager.opt_in(name=current_user.get_id(), email=current_user.get_email())
+            return redirect(url_for('wiki.user_index'))
+        if current_user.opt_in() == 0:
+            return render_template('opt_in.html', form=form)
+        else:
+            return render_template('opt_out.html', form=form)
 
 
 """
