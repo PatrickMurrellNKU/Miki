@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Enter email{% endblock title %}
+
+{% block content %}
+        <form class="form form-inline" method="POST">
+            {{ form.hidden_tag() }}
+            {{ form.email(placeholder='someone@example.com') }}
+            <input type="submit" class="btn btn-primary" value="Submit">
+        </form>
+{% endblock content %}

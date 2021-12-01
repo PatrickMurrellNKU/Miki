@@ -79,6 +79,12 @@ class RegisterForm(Form):
             raise ValidationError('Passwords do not match')
 
 
+class FeaturedForm(Form):
+    email = TextField('', [InputRequired()])
+
+class OptForm(Form):
+    True
+
 class UploadForm(Form):
     file = FileField('Upload File', validators=[FileRequired()])
     description = TextAreaField(validators=[InputRequired()])

@@ -5,5 +5,6 @@
 {% block content %}
     <h3>Username: {{ username }}</h3>
     <h3>Active: {{ active }}</h3>
+    <h3><a href="{{ url_for('wiki.featured') }}">Email about Featured Page</a></h3>
     <h3><a href="{{ url_for('wiki.user_unregister') }}">Unregister</a></h3>
 {% endblock content %}
