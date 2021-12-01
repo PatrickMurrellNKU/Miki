@@ -2,7 +2,11 @@
     Routes
     ~~~~~~
 """
-from flask import Blueprint
+import io
+import os
+import sqlite3
+
+from flask import Blueprint, send_file
 from flask import flash
 from flask import redirect
 from flask import render_template
@@ -12,6 +16,8 @@ from flask_login import current_user
 from flask_login import login_required
 from flask_login import login_user
 from flask_login import logout_user
+from werkzeug.utils import secure_filename
+from config import DOMAIN
 
 from wiki.core import Processor
 from wiki.web.forms import EditorForm
@@ -25,6 +31,11 @@ from wiki.web import current_users
 from wiki.web.user import protect, User, UserManager
 from wiki.web.featured import feature
 from wiki.web.forms import OptForm
+
+from wiki.web.forms import UploadForm
+
+import html2text
+import pdfkit
 
 bp = Blueprint('wiki', __name__)
 
@@ -166,13 +177,16 @@ def user_index():
 
 @bp.route('/user/register/', methods=['GET', 'POST'])
 def user_register():
+    # Create a register form object and check if it is valid
     form = RegisterForm()
     if form.validate_on_submit():
+        # if the form is valid then add a new user to the database
         usermanager = UserManager()
         user = usermanager.add_user(name=form.name.data, password=form.password.data)
         user.set('authenticated', True)
         flash('Account creation successful.', 'success')
         return redirect(request.args.get("next") or url_for('wiki.index'))
+    # the form is not valid so return the register page
     return render_template('register.html', form=form)
 
 
@@ -184,12 +198,15 @@ def user_admin(user_id):
 @bp.route('/user/unregister/', methods=['GET', 'POST'])
 @login_required
 def user_unregister():
+    # Create a login form and check if it is valid
     form = LoginForm()
     if form.validate_on_submit():
+        # If the login form is valid then delete the user from the database
         usermanager = UserManager()
         usermanager.delete_user(form.name.data)
         flash('Account deleted.', 'success')
         return redirect(request.args.get("next") or url_for('wiki.index'))
+    # The form is not valid so return the unregister page
     return render_template('unregister.html', form=form)
 
 
@@ -215,6 +232,100 @@ def featured():
         else:
             return render_template('opt_out.html', form=form)
 
+            
+@bp.route('/files/')
+@protect
+def files():
+    try:
+        con = sqlite3.connect('./Database/database.db')
+        c = con.cursor()
+        c.execute('select * from files')
+        data = c.fetchall()
+    except Exception as e:
+        print(e)
+        flash('There was an error displaying files')
+        return render_template('files.html')
+    return render_template('files.html', data=data)
+
+
+@bp.route('/files/<int:fid>')
+@protect
+def file_display(fid):
+    try:
+        con = sqlite3.connect('./Database/database.db')
+        c = con.cursor()
+        c.execute('select * from files where id = ?', [fid])
+        data = [dict(id=row[0], name=row[1], desc=row[2], date=row[3], user=row[4]) for row in c.fetchall()]
+        if not data:
+            return redirect(url_for('wiki.files'))
+    except Exception as e:
+        print(e)
+        flash('There was an error displaying your file')
+        return redirect(url_for('wiki.files'))
+    return render_template('file_display.html', fid=fid, data=data)
+
+
+@bp.route('/files/upload/', methods=['GET', 'POST'])
+@protect
+def upload():
+    form = UploadForm()
+    if form.validate_on_submit():
+        f = request.files['file']
+        description = form.description.data
+        filename = secure_filename(f.filename)
+        user = current_user.get_id()
+        try:
+            con = sqlite3.connect('./Database/database.db')
+            c = con.cursor()
+            c.execute("""INSERT INTO files(filename, description, user) 
+                           VALUES (?,?, ?);""", (filename, description, user))
+            con.commit()
+            upload_folder = "../Riki/wiki/web/static/uploads/"
+            f.save(os.path.join(upload_folder, filename))
+            fid = c.lastrowid
+            return redirect(url_for('wiki.file_display', fid=fid))
+        except Exception as e:
+            print(e)
+            flash('There was an error uploading your file')
+            return render_template('upload.html', form=form)
+            # flash error message
+    return render_template('upload.html', form=form)
+
+
+@bp.route('/download/<name>')
+@protect
+def download(name):
+    try:
+        return send_file('./static/uploads/%s' % name)
+    except Exception as e:
+        print(e)
+        flash('There was an error downloading your file')
+        return redirect(url_for('wiki.files'))
+
+@bp.route('/convert/pdf/<url>')
+def convert_pdf(url):
+    page = current_wiki.get_or_404(url)
+    url = url + '.pdf'
+    converted_folder = "../Riki/wiki/web/static/converted/"
+
+    pdfkit.from_string(render_template('pdf.html', page=page, domain=DOMAIN), output_path=(converted_folder + url))
+
+    return send_file('./static/converted/' + url, as_attachment=True)
+
+
+@bp.route('/convert/txt/<url>')
+def convert_txt(url):
+    page = current_wiki.get_or_404(url)
+    url = url + '.txt'
+
+    converted_folder = "../Riki/wiki/web/static/converted/"
+
+    file = open(converted_folder + url, 'w')
+    file.write(html2text.html2text(render_template('bare.html', page=page)))
+    file.close()
+
+    return send_file('./static/converted/' + url, as_attachment=True)
+
 
 """
     Error Handlers
@@ -225,4 +336,3 @@ def featured():
 @bp.errorhandler(404)
 def page_not_found(error):
     return render_template('404.html'), 404
-

@@ -20,14 +20,18 @@ class UserManager(object):
 
     def add_user(self, name, password,
                  active=True, roles="", authentication_method=None):
+        # Connect to the database
         conn = sqlite3.connect('Database/database.db')
         cursor = conn.cursor()
+        # Get the user via user name
         cursor.execute("select * from Users where username  = ?", (name,))
         user = cursor.fetchall()
+        # If the user exists return false as we cannot create a user that has the same username
         if user:
             return False
         if authentication_method is None:
             authentication_method = get_default_authentication_method()
+        # The new user does not exist, so create a dictionary to be inserted into the database
         new_user = {
             'active': active,
             'roles': roles,
@@ -43,24 +47,31 @@ class UserManager(object):
             new_user['password'] = password
         else:
             raise NotImplementedError(authentication_method)
+        # add the user to the users table in the database
         cursor.execute("INSERT INTO Users (username,active,authentication_method,password,authenticated,roles) "
                        "VALUES (?,?,?,?,?,?)",
                        (name, new_user['active'], new_user['authentication_method'],
                         new_user['password'],new_user['authenticated'], new_user['roles']))
         conn.commit()
+        # get the user from the database
         cursor.execute("SELECT * FROM Users WHERE username  = ?", (name,))
         userdata = cursor.fetchone()
         userdata = {'active': userdata[1], 'authentication_method': userdata[2], 'password': userdata[3],
                     'authenticated': userdata[4], 'roles': userdata[5], 'email': userdata[6], 'featured': userdata[7]}
+        # close the database connection
         conn.close()
         return User(self, name, userdata)
 
     def get_user(self, name):
+        # Connect to the database
         conn = sqlite3.connect('Database/database.db')
         cursor = conn.cursor()
+        # Query the user by username
         cursor.execute("select * from Users where username  = ?", (name,))
         userdata = cursor.fetchone()
+        # close the database connection
         conn.close()
+        # return the user data (if any)
         if not userdata:
             return None
         userdata = {'active': userdata[1], 'authentication_method': userdata[2], 'password': userdata[3],
@@ -68,20 +79,26 @@ class UserManager(object):
         return User(self, name, userdata)
 
     def delete_user(self, name):
+        # connect to the database
         conn = sqlite3.connect('Database/database.db')
         cursor = conn.cursor()
+        # query the data base for the user
         cursor.execute("SELECT * FROM Users WHERE username = ?", (name,))
         userdata = cursor.fetchone()
+        # if the user exists, delete the user
         if not userdata:
             return False
         cursor.execute("DELETE FROM Users WHERE username = ?", (name,))
         conn.commit()
+        # Close the database connection
         conn.close()
         return True
 
     def update(self, name, userdata):
+        # Connect to the database
         conn = sqlite3.connect('Database/database.db')
         cursor = conn.cursor()
+        # Update the user with a matching username with the new user data
         cursor.execute("UPDATE Users SET active = ?,authentication_method = ?,password = ?,"
                        "authenticated = ?,roles = ?,email = ?, featured = ? where username = ?",
                        (userdata['active'],  userdata['authentication_method'],
@@ -98,6 +115,7 @@ class UserManager(object):
         else:
             cursor.execute("UPDATE Users SET email = ?, featured = ? where username = ?", (email, 0, name))
         conn.commit()
+        # Close the data base connection
         conn.close()
 
 

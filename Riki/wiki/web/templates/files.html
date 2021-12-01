@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Files{% endblock title %}
+{% with messages = get_flashed_messages() %}
+   {% if messages %}
+         {{ message }}
+   {% endif %}
+{% endwith %}
+{% block content %}
+    <p><a href="/files/upload">Upload a file here</a></p>
+    <table class="table">
+            <tr>
+                <th>Filename</th>
+                <th>Description</th>
+                <th>Date Uploaded</th>
+                <th>Uploaded By</th>
+                <th>Download</th>
+            </tr>
+    {% if data %}
+    {% for data in data %}
+            <tr>
+                <td><a href="/files/{{ data[0]}}">{{data[1]}}</a></td>
+                <td>{{ data[2]}}</td>
+                <td>{{ data[3]}}</td>
+                <td>{{ data[4]}}</td>
+                <td><a href="/download/{{ data[1]}}" target="blank"><button class='btn btn-default'>Download</button></a></td>
+            </tr>
+    {% endfor %}
+    {% else %}
+    <tr>
+        <td colspan="5">There are currently no files</td>
+    </tr>
+    {% endif %}
+        </table>
+{% endblock content %}
