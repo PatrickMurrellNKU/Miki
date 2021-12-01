@@ -74,3 +74,11 @@ class RegisterForm(Form):
             return
         else:
             raise ValidationError('Passwords do not match')
+
+
+class FeaturedForm(Form):
+    email = TextField('', [InputRequired()])
+
+
+class OptForm(Form):
+    True
