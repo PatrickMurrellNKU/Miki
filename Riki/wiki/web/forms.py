@@ -78,10 +78,11 @@ class RegisterForm(Form):
         else:
             raise ValidationError('Passwords do not match')
 
-
+# Simple form used when entering user email
 class FeaturedForm(Form):
     email = TextField('', [InputRequired()])
 
+# Simple form used for clicking submit button to opt in or out of emails
 class OptForm(Form):
     True
 
