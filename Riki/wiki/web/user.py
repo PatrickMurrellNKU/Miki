@@ -108,8 +108,10 @@ class UserManager(object):
         conn.close()
 
     def opt_in(self, name, email):
+        # Connect to the database
         conn = sqlite3.connect('Database/database.db')
         cursor = conn.cursor()
+        # Update the current user's data with their email and switching between 1 or 0 for opting in or out respectively
         if current_user.opt_in() == 0:
             cursor.execute("UPDATE Users SET email = ?, featured = ? where username = ?", (email, 1, name))
         else:
