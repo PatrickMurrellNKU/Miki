@@ -59,7 +59,9 @@ def index():
 @bp.route('/<path:url>/')
 @protect
 def display(url):
+    # If the featured page button was clicked then the url will be 'feature' otherwise proceed normally
     if url == 'feature':
+        # The feature() method will handle displaying the correct page if the featured page button was clicked
         page = feature()
     else:
         page = current_wiki.get_or_404(url)
@@ -213,20 +215,28 @@ def user_unregister():
 @bp.route('/user/featured/', methods=['GET', 'POST'])
 @login_required
 def featured():
+    # First determine if the user has entered an email or not
     if current_user.get_email() is None:
+        # Create a form for the user to enter an email since their email is currently NULL
         form = FeaturedForm()
         if form.validate_on_submit():
+            # If the form is valid then add the user's email to the database
             usermanager = UserManager()
             name = current_user.get_id()
             usermanager.opt_in(name=name, email=form.email.data)
             return redirect(url_for('wiki.user_index'))
+        # Form is not valid so show the featured page
         return render_template('featured.html', form=form)
+    # If the user has previously entered an email, check to see if they need to opt in or opt out of emails
     else:
+        # Create a blank form with only a submit button for the user to confirm their decision
         form = OptForm()
         if form.is_submitted():
+            # If submit is clicked, change the value of featured in the database for the current user
             usermanager = UserManager()
             usermanager.opt_in(name=current_user.get_id(), email=current_user.get_email())
             return redirect(url_for('wiki.user_index'))
+        # If submit hasn't been clicked, return either the opt in or opt out page depending on the value featured in the database
         if current_user.opt_in() == 0:
             return render_template('opt_in.html', form=form)
         else:
