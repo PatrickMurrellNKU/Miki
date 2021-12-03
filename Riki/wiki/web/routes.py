@@ -232,19 +232,22 @@ def featured():
         else:
             return render_template('opt_out.html', form=form)
 
-            
+
 @bp.route('/files/')
 @protect
 def files():
     try:
+        # try to connect to database
         con = sqlite3.connect('./Database/database.db')
         c = con.cursor()
         c.execute('select * from files')
         data = c.fetchall()
+    # if connection fails show error message
     except Exception as e:
         print(e)
         flash('There was an error displaying files')
         return render_template('files.html')
+    # return page with data
     return render_template('files.html', data=data)
 
 
@@ -252,16 +255,19 @@ def files():
 @protect
 def file_display(fid):
     try:
+        # try to connect to to database
         con = sqlite3.connect('./Database/database.db')
         c = con.cursor()
         c.execute('select * from files where id = ?', [fid])
         data = [dict(id=row[0], name=row[1], desc=row[2], date=row[3], user=row[4]) for row in c.fetchall()]
         if not data:
             return redirect(url_for('wiki.files'))
+    # if connection fails show error message and redirect to files page
     except Exception as e:
         print(e)
         flash('There was an error displaying your file')
         return redirect(url_for('wiki.files'))
+    # display details of requested file
     return render_template('file_display.html', fid=fid, data=data)
 
 
@@ -269,14 +275,17 @@ def file_display(fid):
 @protect
 def upload():
     form = UploadForm()
+    # checks if upload form is valid
     if form.validate_on_submit():
         f = request.files['file']
         description = form.description.data
         filename = secure_filename(f.filename)
         user = current_user.get_id()
         try:
+            # connect to database
             con = sqlite3.connect('./Database/database.db')
             c = con.cursor()
+            # insert the uploaded form into the database
             c.execute("""INSERT INTO files(filename, description, user) 
                            VALUES (?,?, ?);""", (filename, description, user))
             con.commit()
@@ -285,10 +294,11 @@ def upload():
             fid = c.lastrowid
             return redirect(url_for('wiki.file_display', fid=fid))
         except Exception as e:
+            # if there was an error connecting to the database reload the page and show error message
             print(e)
+            # flash error message
             flash('There was an error uploading your file')
             return render_template('upload.html', form=form)
-            # flash error message
     return render_template('upload.html', form=form)
 
 
@@ -296,11 +306,15 @@ def upload():
 @protect
 def download(name):
     try:
+        # try to download requested file from database
         return send_file('./static/uploads/%s' % name)
     except Exception as e:
+        # if retrieval fails, show error message and redirect to files page
         print(e)
+        # flash error message
         flash('There was an error downloading your file')
         return redirect(url_for('wiki.files'))
+
 
 @bp.route('/convert/pdf/<url>')
 def convert_pdf(url):
