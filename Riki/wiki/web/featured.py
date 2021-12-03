@@ -23,13 +23,13 @@ def remove_home():
 
 
 def choose(pages):
-    minute = int(get_time())
+    day = int(get_time())
     length = len(pages)
-    value = minute % length
+    value = day % length
     return pages[value]
 
 
 def get_time():
     t = time.localtime()
-    minute = time.strftime("%M", t)
-    return minute
+    day = time.strftime("%d", t)
+    return day
