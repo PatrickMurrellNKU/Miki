@@ -5,6 +5,8 @@
 import io
 import os
 import sqlite3
+import html2text
+import pdfkit
 
 from flask import Blueprint, send_file
 from flask import flash
@@ -34,8 +36,12 @@ from wiki.web.forms import OptForm
 
 from wiki.web.forms import UploadForm
 
-import html2text
-import pdfkit
+import re
+
+
+def regexp(y, x, search=re.search):
+    return 1 if search(y, x) else 0
+
 
 bp = Blueprint('wiki', __name__)
 
@@ -324,6 +330,25 @@ def download(name):
         # flash error message
         flash('There was an error downloading your file')
         return redirect(url_for('wiki.files'))
+
+
+@bp.route('/images/')
+@protect
+def images():
+    try:
+        # try to connect to database
+        con = sqlite3.connect('./Database/database.db')
+        con.create_function('regexp', 2, regexp)
+        c = con.cursor()
+        c.execute('select * from files where filename regexp ?', [r'[^\s]+(.*?)\.(jpg|jpeg|png|gif|JPG|JPEG|PNG|GIF)$'])
+        data = c.fetchall()
+    # if connection fails show error message
+    except Exception as e:
+        print(e)
+        flash('There was an error displaying images')
+        return render_template('images.html')
+    # return page with data
+    return render_template('images.html', data=data)
 
 
 @bp.route('/convert/pdf/<url>')
